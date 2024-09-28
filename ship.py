@@ -5,7 +5,7 @@ class Ship:
     self.name = name
     self.name_en = name_en
     self.size = size
-    self.live = size
+    self.life = size
     self.char = char[0]
     self.orientation:Literal["vertical", "horizontal"] = orientation
     self.start_position = start_position

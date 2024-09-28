@@ -1,19 +1,20 @@
 from typing import List, Tuple
 from ship import Ship
-
+from functools import reduce
 
 class PlatformTable:
-  def __init__(self, width, height) -> None:
+  def __init__(self, width, height, hidden = False) -> None:
     self.table = self.__create_platform(width, height)
     self.width = width
     self.height = height
     self.player_ships:List[Ship] = []
-    self.botShips = []
+    self.hidden_ship = hidden
   
   def __create_platform(self, width: int, height: int):
-    return [ [{"field": f" ", "ship": None} for x in range(width)] for y in range(height) ]
+    return [ [{"field": f" ", "ship": None, "is_shot": False} for x in range(width)] for y in range(height) ]
   
-  def to_string(self):
+  def to_string(self, hidden_ship:bool = None):
+    is_hidden_ship = hidden_ship if not hidden_ship == None else self.hidden_ship
     RED = "\033[31m"
     GREEN = "\033[32m"
     GREEN_BOLD = "\033[1;32m"
@@ -26,8 +27,13 @@ class PlatformTable:
     header_separator= "----+" + "+".join(["----" for x in range(width)])
     rows = ""
     print(f"{RED} Bright Green{RESET} \n")
+    get_hidden_shoot_value = lambda x,y: '✠' if self.table[y][x].get('is_shot') else ' '
+    get_value = lambda x,y: get_hidden_shoot_value(x,y) if is_hidden_ship else self.table[y][x].get('field')
+    get_is_water = lambda x,y: self.table[y][x].get('field') == ' '
+    get_calculated_value = lambda x,y: get_value(x,y) if (not self.table[y][x].get('is_shot')) or not get_is_water(x,y) else '.'
     for y in range(height):
-      row = f" {self.__get_label_position_format(y)} |" +  "|".join([f"{GREEN_BOLD}  {self.table[y][x].get('field')} {RESET}" for x in range(width)])
+      row_data = [f"{RED if self.table[y][x].get('is_shot') else GREEN_BOLD}  {get_calculated_value(x,y)} {RESET}" for x in range(width)]
+      row = f" {self.__get_label_position_format(y)} |" +  "|".join(row_data)
       row_separator = "----+" + "+".join(["----" for x in range(width)])
       rows = rows + row + "\n" + row_separator + "\n"
     return header + "\n" + header_separator + "\n" + rows
@@ -53,7 +59,7 @@ class PlatformTable:
       cross = self.table[y_pos][x_pos].get('field') != " "
       if cross:
         raise Exception("Estas colocando un barco sobre otro")
-      self.table[y_pos][x_pos].update({'field': ship.char})
+      self.table[y_pos][x_pos].update({'field': ship.char, 'ship': ship})
       """ try:
       except:
         print("No se puede colocar el ship") """
@@ -92,3 +98,28 @@ class PlatformTable:
     if y1 == y2 and y3 == y4:
         return (y1 == y3) and (max(x1, x2) >= min(x3, x4)) and (max(x3, x4) >= min(x1, x2))
     return False
+  
+  def shoot_place(self, position: Tuple[int, int]):
+    pos_x, pos_y = position
+    place_data = self.table[pos_y][pos_x]
+    field = place_data.get('field')
+    ship = place_data.get('ship')
+    is_shot = place_data.get('is_shot')
+    place_data.update({'is_shot': True})
+    has_shot = False
+    if ship is None :
+      print("...|==> Le diste al agua <==|...\n\n")
+    else:
+      if not is_shot:
+        ship:Ship = place_data.get('ship')
+        ship.life = ship.life - 1
+        place_data.update({'is_shot': True})
+        print('"  Diste a un barco  "\n\n')
+        has_shot = True
+      else:
+        print('"  ...  "\n\n')
+    return has_shot
+
+  def get_ships_life(self):
+    all_life = reduce(lambda a, b: a + b.life, self.player_ships, 0)
+    return all_life
