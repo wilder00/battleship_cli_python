@@ -26,7 +26,6 @@ class PlatformTable:
     header = "|".join(header)
     header_separator= "----+" + "+".join(["----" for x in range(width)])
     rows = ""
-    print(f"{RED} Bright Green{RESET} \n")
     get_hidden_shoot_value = lambda x,y: '✠' if self.table[y][x].get('is_shot') else ' '
     get_value = lambda x,y: get_hidden_shoot_value(x,y) if is_hidden_ship else self.table[y][x].get('field')
     get_is_water = lambda x,y: self.table[y][x].get('field') == ' '
@@ -36,7 +35,7 @@ class PlatformTable:
       row = f" {self.__get_label_position_format(y)} |" +  "|".join(row_data)
       row_separator = "----+" + "+".join(["----" for x in range(width)])
       rows = rows + row + "\n" + row_separator + "\n"
-    return header + "\n" + header_separator + "\n" + rows
+    return "\n" + header + "\n" + header_separator + "\n" + rows
   
   def __get_label_position_format(self, position: int) -> str:
     if position < 10:
@@ -74,7 +73,6 @@ class PlatformTable:
       if is_cross:
         break
     is_over_flow = ship.end_position[0] >= self.width or ship.end_position[1] >= self.height
-    print(is_over_flow, is_cross)
     return is_cross or is_over_flow
   
   def verify_lines_cross(self, line1:Tuple[Tuple[int,int],Tuple[int,int]], line2:Tuple[Tuple[int,int],Tuple[int,int]]):

@@ -78,6 +78,7 @@ class Game:
         print(e)
         print("\n ======================================== \n")
         # raise Exception("error")
+    print("\n")
     print(platform.to_string())
 
 
@@ -146,17 +147,20 @@ class Game:
       print("A: Atacar")
       option = input("Escribir opción:").upper()
       if option == 'B' or option == 'SHOW BOT':
+        print("\n\n")
         print('=====================================================')
         print(f'                 Tablero Bot: {self.player_platform.get_ships_life()}                   ')
         print('=====================================================')
         is_hidden_ship = False if option == 'SHOW BOT' else None
         print(self.bot_platform.to_string(is_hidden_ship))
       if option == 'P':
+        print("\n\n")
         print('=====================================================')
         print(f'                 Tablero Player: {self.player_platform.get_ships_life()}                   ')
         print('=====================================================')
         print(self.player_platform.to_string())
       if option == 'A':
+        print("\n")
         print("== seleccionar coordenada de ataque: ==")
         pos_x = int(input('Columna:'))
         pos_y = int(input('Fila:'))
