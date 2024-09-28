@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from ship import Ship
 
 
@@ -11,7 +11,7 @@ class PlatformTable:
     self.botShips = []
   
   def __create_platform(self, width: int, height: int):
-    return [ [f" " for x in range(width)] for y in range(height) ]
+    return [ [{"field": f" ", "ship": None} for x in range(width)] for y in range(height) ]
   
   def to_string(self):
     RED = "\033[31m"
@@ -27,7 +27,7 @@ class PlatformTable:
     rows = ""
     print(f"{RED} Bright Green{RESET} \n")
     for y in range(height):
-      row = f" {self.__get_label_position_format(y)} |" +  "|".join([f"{GREEN_BOLD}  {self.table[y][x]} {RESET}" for x in range(width)])
+      row = f" {self.__get_label_position_format(y)} |" +  "|".join([f"{GREEN_BOLD}  {self.table[y][x].get('field')} {RESET}" for x in range(width)])
       row_separator = "----+" + "+".join(["----" for x in range(width)])
       rows = rows + row + "\n" + row_separator + "\n"
     return header + "\n" + header_separator + "\n" + rows
@@ -50,10 +50,10 @@ class PlatformTable:
     while not cross and not count_size >= ship.size:
       x_pos = ship.start_position[0] + count_size if ship.orientation == "horizontal" else x_pos
       y_pos = ship.start_position[1] + count_size if ship.orientation == "vertical" else y_pos
-      cross = self.table[y_pos][x_pos] != " "
+      cross = self.table[y_pos][x_pos].get('field') != " "
       if cross:
         raise Exception("Estas colocando un barco sobre otro")
-      self.table[y_pos][x_pos] = ship.char
+      self.table[y_pos][x_pos].update({'field': ship.char})
       """ try:
       except:
         print("No se puede colocar el ship") """
@@ -64,13 +64,31 @@ class PlatformTable:
     is_cross = False
     is_over_flow = False
     for registered_ship in self.player_ships:
-      is_new_ship_x_repeated = ship.orientation == 'vertical'
-      is_registered_x_repeated = registered_ship.orientation == 'vertical'
-      value = ship.start_position[0] if is_new_ship_x_repeated else ship.start_position[1]
-      value_registered_start = registered_ship.start_position[0] if not is_registered_x_repeated else registered_ship.start_position[1]
-      value_registered_end = registered_ship.end_position[0] if not is_registered_x_repeated else registered_ship.end_position[1]
-      is_cross = is_cross or (value_registered_start <= value <= value_registered_end)
+      is_cross = is_cross or self.verify_lines_cross((ship.start_position, ship.end_position), (registered_ship.start_position, registered_ship.end_position))
       if is_cross:
         break
     is_over_flow = ship.end_position[0] >= self.width or ship.end_position[1] >= self.height
+    print(is_over_flow, is_cross)
     return is_cross or is_over_flow
+  
+  def verify_lines_cross(self, line1:Tuple[Tuple[int,int],Tuple[int,int]], line2:Tuple[Tuple[int,int],Tuple[int,int]]):
+    line1_start, line1_end = line1
+    line2_start, line2_end = line2
+    
+    x1, y1 = line1_start
+    x2, y2 = line1_end
+    x3, y3 = line2_start
+    x4, y4 = line2_end
+
+    # Case 1: One vertical, one horizontal
+    if x1 == x2 and y3 == y4:  # line1 is vertical, line2 is horizontal
+        return (x3 <= x1 <= x4) and (y1 <= y3 <= y2 or y2 <= y3 <= y1)
+    if y1 == y2 and x3 == x4:  # line1 is horizontal, line2 is vertical
+        return (y3 <= y1 <= y4) and (x1 <= x3 <= x2 or x2 <= x3 <= x1)
+    # Case 2: Both are vertical (same x, overlapping y-range)
+    if x1 == x2 and x3 == x4:
+        return (x1 == x3) and (max(y1, y2) >= min(y3, y4)) and (max(y3, y4) >= min(y1, y2))
+    # Case 3: Both are horizontal (same y, overlapping x-range)
+    if y1 == y2 and y3 == y4:
+        return (y1 == y3) and (max(x1, x2) >= min(x3, x4)) and (max(x3, x4) >= min(x1, x2))
+    return False
